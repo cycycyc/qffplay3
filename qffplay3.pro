@@ -1,3 +1,5 @@
+##############
+
 INCLUDEPATH += D:/developing/ffmpeg/ffmpeg/include
 
 LIBS += \
