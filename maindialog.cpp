@@ -1,6 +1,7 @@
 #include "maindialog.h"
 #include "ui_maindialog.h"
 #include <QFile>
+#include <QPainter>
 
 MainDialog::MainDialog(QWidget *parent) :
     QDialog(parent),
@@ -11,7 +12,7 @@ MainDialog::MainDialog(QWidget *parent) :
     file.open(QIODevice::ReadOnly);
     QString uri;
     int count = 0;
-    ui->tableWidget->setColumnCount(1);
+    ui->tableWidget->setColumnCount(2);
     while ((uri = QString(file.readLine())).size() > 1)
     {
         uri = uri.trimmed();
@@ -26,17 +27,40 @@ MainDialog::MainDialog(QWidget *parent) :
         dt->openFile(uri);
         decoders.append(dt);
     }
+    ui->tableWidget->resizeColumnsToContents();
 
     connect(ui->beginBtn, SIGNAL(clicked()), this, SLOT(OnAllBegin()));
     connect(ui->stopBtn, SIGNAL(clicked()), this, SLOT(OnAllStop()));
     connect(ui->tableWidget, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(OnSelectVideo(int,int,int,int)));
 
     currentRow = 0;
+    curVideoThread = NULL;
+    needResize = true;
 }
 
 MainDialog::~MainDialog()
 {
     delete ui;
+}
+
+void MainDialog::paintEvent(QPaintEvent *evt)
+{
+    QDialog::paintEvent(evt);
+    if (!curVideoThread || curVideoThread->LastFrame.isNull()) return;
+    if (needResize)
+    {
+        ui->screen->setFixedSize(curVideoThread->LastFrame.size());
+        needResize = false;
+    }
+    QPainter p(this);
+    p.drawImage(ui->screen->pos()+ui->screenBox->pos(), curVideoThread->LastFrame);
+
+    int curSec = curVideoThread->getCurrentMs()/1000;
+    int totalSec = curVideoThread->getVideoLengthMs()/1000;
+
+    QString text;
+    text = text.sprintf("Time: %d:%02d/%d:%02d", curSec/60, curSec%60, totalSec/60, totalSec%60);
+    ui->label->setText(text);
 }
 
 void MainDialog::OnAllBegin()
@@ -45,10 +69,14 @@ void MainDialog::OnAllBegin()
     foreach (dt, decoders) {
         if (dt->isOk()) dt->start();
     }
-    decoders.first()->attachVideo(ui->widget);
+
+    curVideoThread = decoders[0]->getVideoThread();
+    curVideoThread->setActived(true);
+    connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+
+
     currentRow = 0;
     ui->tableWidget->setCurrentCell(0,0);
-    update();
 }
 
 void MainDialog::OnAllStop()
@@ -59,7 +87,14 @@ void MainDialog::OnAllStop()
 void MainDialog::OnSelectVideo(int row, int, int, int)
 {
     if (currentRow == row) return;
-    decoders[currentRow]->detachVideo(ui->widget);
-    decoders[row]->attachVideo(ui->widget);
+
+    curVideoThread->setActived(false);
+    disconnect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+
+    curVideoThread = decoders[row]->getVideoThread();
+    curVideoThread->setActived(true);
+    connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+
     currentRow = row;
+    needResize = true;
 }

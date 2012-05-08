@@ -20,6 +20,7 @@ public:
     bool decodeSeekFrame(qint64 after);
     int getVideoLengthMs();
     int getCurrentMs();
+    void setActived(bool flag);
 
     QImage LastFrame;
 
@@ -51,6 +52,7 @@ private:
     QMutex* mutex;
     QTimer          playTimer;
     int             timeoffset;
+    bool            actived;
 
 };
 

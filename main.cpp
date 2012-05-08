@@ -3,6 +3,9 @@
 
 int main(int argc, char** argv)
 {
+    avcodec_register_all();
+    av_register_all();
+    avformat_network_init();
     QApplication app(argc, argv);
     //DecodeThread d;
     //d.openFile("http://v.youku.com/player/getRealM3U8/vid/XMzgyNjUyMjMy/type//video.m3u8");

@@ -1,6 +1,7 @@
 #include "decodethread.h"
 
 
+
 DecodeThread::DecodeThread(QObject *parent) :
     QThread(parent)
 {
@@ -49,9 +50,7 @@ void DecodeThread::close()
 
 bool DecodeThread::initCodec()
 {
-    avcodec_register_all();
-    av_register_all();
-    avformat_network_init();
+
 
     //cout << "License: " << avformat_license() << endl;
     //cout << "AVCodec version: " << avformat_version() << endl;
@@ -125,29 +124,24 @@ bool DecodeThread::isOk()
    return ok;
 }
 
-void DecodeThread::attachVideo(Screen *sreen)
-{
-    if (!ok) return;
-    sreen->setVideoThread(vthread);
-}
-
-void DecodeThread::detachVideo(Screen *sreen)
-{
-    if (!ok) return;
-    sreen->unsetVideoThread(vthread);
-}
 
 void DecodeThread::run()
 {
     if (!ok) return;
-
+    int lives = 3;
     forever
     {
         // Read a frame
         //cout << "I'm stucked here!" << endl;
         if(av_read_frame(pFormatCtx, &packet)<0)
         {
-            cout << "Read frame failed!!" << endl;
+            cout << "Read frame failed!! Remaining Lives: " << lives << endl;
+            if (lives > 0)
+            {
+                lives--;
+                continue;
+            }
+            else
             break;                             // Frame read failed (e.g. end of stream)
         }
 

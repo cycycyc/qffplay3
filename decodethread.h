@@ -7,7 +7,6 @@
 #include <QMutex>
 #include "ffmpeg.h"
 #include "videothread.h"
-#include "screen.h"
 
 class DecodeThread : public QThread
 {
@@ -20,8 +19,7 @@ public:
     bool openFile(QString file);
     void close();
     bool isOk();
-    void attachVideo(Screen*);
-    void detachVideo(Screen*);
+    VideoThread* getVideoThread() const {return vthread;}
 
 protected:
     virtual void run();
@@ -49,6 +47,7 @@ private:
     QMutex* audioMutex;
 
     VideoThread* vthread;
+
 };
 
 #endif // DECODETHREAD_H

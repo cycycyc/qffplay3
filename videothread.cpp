@@ -37,6 +37,8 @@ VideoThread::VideoThread(QList<AVPacket> &q, QMutex *m, AVCodecContext *_pCodecC
     int interval = 2* (double)num*1000 / (double)den;
     cout << "den: " << den << "num: " << num << "interval: " << interval << endl;
     playTimer.start(interval);
+
+    actived = false;
 }
 
 VideoThread::~VideoThread()
@@ -113,78 +115,83 @@ bool VideoThread::decodeSeekFrame(qint64 after)
          mutex->unlock();
          avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
 
-         //printf("used %d out of %d bytes\n",len,packet.size);
-
-         //printf("Frame type: ");
-         //if(pFrame->pict_type == FF_B_TYPE)
-         //   printf("B\n");
-         //else if (pFrame->pict_type == FF_I_TYPE)
-         //   printf("I\n");
-         //else
-         //   printf("P\n");
-
-
-         //printf("codecctx time base: num: %d den: %d\n",pCodecCtx->time_base.num,pCodecCtx->time_base.den);
-         //printf("formatctx time base: num: %d den: %d\n",pFormatCtx->streams[videoStream]->time_base.num,pFormatCtx->streams[videoStream]->time_base.den);
-         //printf("pts: %ld\n",pts);
-         //printf("dts: %ld\n",dts);
-
-
-
-
-         // Did we get a video frame?
-         if(frameFinished)
+         if (actived)
          {
-            AVRational millisecondbase = {1, 1000};
-            qint64 f = packet.dts;
-            qint64 t = av_rescale_q(packet.dts,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
-            if(LastFrameOk==false)
-            {
-               LastFrameOk=true;
-               LastLastFrameTime=LastFrameTime=t;
-               LastLastFrameNumber=LastFrameNumber=f;
-            }
-            else
-            {
-               // If we decoded 2 frames in a row, the last times are okay
-               LastLastFrameTime = LastFrameTime;
-               LastLastFrameNumber = LastFrameNumber;
-               LastFrameTime=t;
-               LastFrameNumber=f;
-            }
-            if (timeoffset < 0) timeoffset = LastFrameTime;
-            //printf("Frame %d @ %d. LastLastT: %d. LastLastF: %d. LastFrameOk: %d\n",LastFrameNumber,LastFrameTime,LastLastFrameTime,LastLastFrameNumber,(int)LastFrameOk);
 
-            // Is this frame the desired frame?
-            if(after==-1 || LastFrameNumber>=after)
-            {
-               // It's the desired frame
 
-               // Convert the image format (init the context the first time)
-               int w = pCodecCtx->width;
-               int h = pCodecCtx->height;
+             //printf("used %d out of %d bytes\n",len,packet.size);
 
-               img_convert_ctx = sws_getCachedContext(img_convert_ctx,w, h, pCodecCtx->pix_fmt, w, h, PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
+             //printf("Frame type: ");
+             //if(pFrame->pict_type == FF_B_TYPE)
+             //   printf("B\n");
+             //else if (pFrame->pict_type == FF_I_TYPE)
+             //   printf("I\n");
+             //else
+             //   printf("P\n");
 
-               if(img_convert_ctx == NULL)
-               {
-                  cout << "Cannot initialize the conversion context!" << endl;
-                  return false;
-               }
-               sws_scale(img_convert_ctx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
-               // Convert the frame to QImage
-               LastFrame=QImage(w,h,QImage::Format_RGB888);
+             //printf("codecctx time base: num: %d den: %d\n",pCodecCtx->time_base.num,pCodecCtx->time_base.den);
+             //printf("formatctx time base: num: %d den: %d\n",pFormatCtx->streams[videoStream]->time_base.num,pFormatCtx->streams[videoStream]->time_base.den);
+             //printf("pts: %ld\n",pts);
+             //printf("dts: %ld\n",dts);
 
-               for(int y=0;y<h;y++)
-                  memcpy(LastFrame.scanLine(y),pFrameRGB->data[0]+y*pFrameRGB->linesize[0],w*3);
 
-               // Set the time
-               DesiredFrameTime = av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
-               LastFrameOk=true;
 
-            } // frame of interest
-         }  // frameFinished
+
+             // Did we get a video frame?
+             if(frameFinished)
+             {
+                AVRational millisecondbase = {1, 1000};
+                qint64 f = packet.dts;
+                qint64 t = av_rescale_q(packet.dts,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
+                if(LastFrameOk==false)
+                {
+                   LastFrameOk=true;
+                   LastLastFrameTime=LastFrameTime=t;
+                   LastLastFrameNumber=LastFrameNumber=f;
+                }
+                else
+                {
+                   // If we decoded 2 frames in a row, the last times are okay
+                   LastLastFrameTime = LastFrameTime;
+                   LastLastFrameNumber = LastFrameNumber;
+                   LastFrameTime=t;
+                   LastFrameNumber=f;
+                }
+                if (timeoffset < 0) timeoffset = LastFrameTime;
+                //printf("Frame %d @ %d. LastLastT: %d. LastLastF: %d. LastFrameOk: %d\n",LastFrameNumber,LastFrameTime,LastLastFrameTime,LastLastFrameNumber,(int)LastFrameOk);
+
+                // Is this frame the desired frame?
+                if(after==-1 || LastFrameNumber>=after)
+                {
+                   // It's the desired frame
+
+                   // Convert the image format (init the context the first time)
+                   int w = pCodecCtx->width;
+                   int h = pCodecCtx->height;
+
+                   img_convert_ctx = sws_getCachedContext(img_convert_ctx,w, h, pCodecCtx->pix_fmt, w, h, PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
+
+                   if(img_convert_ctx == NULL)
+                   {
+                      cout << "Cannot initialize the conversion context!" << endl;
+                      return false;
+                   }
+                   sws_scale(img_convert_ctx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
+
+                   // Convert the frame to QImage
+                   LastFrame=QImage(w,h,QImage::Format_RGB888);
+
+                   for(int y=0;y<h;y++)
+                      memcpy(LastFrame.scanLine(y),pFrameRGB->data[0]+y*pFrameRGB->linesize[0],w*3);
+
+                   // Set the time
+                   DesiredFrameTime = av_rescale_q(after,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
+                   LastFrameOk=true;
+
+                } // frame of interest
+             }  // frameFinished
+         }
         // stream_index==videoStream
       av_free_packet(&packet);      // Free the packet that was allocated by av_read_frame
 
@@ -204,8 +211,7 @@ int VideoThread::getVideoLengthMs()
 
 int VideoThread::getCurrentMs()
 {
-    if (timeoffset < 0) return 0;
-    return LastLastFrameTime - timeoffset;
+    return LastLastFrameTime - pFormatCtx->start_time_realtime - 10267;
 }
 
 void VideoThread::run()
@@ -217,4 +223,9 @@ void VideoThread::OnPlayTimeout()
 {
     seekNextFrame();
     emit display();
+}
+
+void VideoThread::setActived(bool flag)
+{
+    actived = flag;
 }

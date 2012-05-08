@@ -22,11 +22,16 @@ public slots:
     void OnAllStop();
     void OnSelectVideo(int,int,int,int);
 
+protected:
+    void paintEvent(QPaintEvent *evt);
+
 private:
     Ui::MainDialog *ui;
     QList<DecodeThread*> decoders;
     QStringList uris;
     int currentRow;
+    VideoThread* curVideoThread;
+    bool needResize;
 };
 
 #endif // MAINDIALOG_H
