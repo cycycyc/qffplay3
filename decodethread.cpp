@@ -135,14 +135,14 @@ void DecodeThread::run()
         //cout << "I'm stucked here!" << endl;
         if(av_read_frame(pFormatCtx, &packet)<0)
         {
-            cout << "Read frame failed!! Remaining Lives: " << lives << endl;
-            if (lives > 0)
+            //cout << "Read frame failed!! Remaining Lives: " << lives << endl;
+            //if (lives > 0)
             {
                 lives--;
                 continue;
             }
-            else
-            break;                             // Frame read failed (e.g. end of stream)
+            //else
+            //break;                             // Frame read failed (e.g. end of stream)
         }
 
         //cout << "Packet of stream " << packet.stream_index << ", size " << packet.size << endl;

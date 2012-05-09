@@ -2,6 +2,8 @@
 #include "ui_maindialog.h"
 #include <QFile>
 #include <QPainter>
+#include <QProgressBar>
+#include <QDesktopWidget>
 
 MainDialog::MainDialog(QWidget *parent) :
     QDialog(parent),
@@ -13,6 +15,11 @@ MainDialog::MainDialog(QWidget *parent) :
     QString uri;
     int count = 0;
     ui->tableWidget->setColumnCount(2);
+    QProgressBar bar;bar.adjustSize();
+    QRect rect = bar.geometry();
+    rect.moveCenter(QApplication::desktop()->geometry().center());
+    bar.setGeometry(rect);
+    bar.show();bar.repaint();
     while ((uri = QString(file.readLine())).size() > 1)
     {
         uri = uri.trimmed();
@@ -22,11 +29,18 @@ MainDialog::MainDialog(QWidget *parent) :
         itemUri->setTextAlignment(Qt::AlignCenter);
         ui->tableWidget->setItem(count-1, 0, itemUri);
         uris.append(uri);
-        DecodeThread* dt = new DecodeThread(this);
         cout << uri.toStdString() << endl;
-        dt->openFile(uri);
+
+    }
+    bar.setFormat("%v/%m");bar.setRange(0, uris.size());
+    for (int i = 0; i < uris.size(); i++)
+    {
+        bar.setValue(i+1);bar.repaint();
+        DecodeThread* dt = new DecodeThread(this);
+        dt->openFile(uris[i]);
         decoders.append(dt);
     }
+    bar.close();
     ui->tableWidget->resizeColumnsToContents();
 
     connect(ui->beginBtn, SIGNAL(clicked()), this, SLOT(OnAllBegin()));
@@ -77,6 +91,7 @@ void MainDialog::OnAllBegin()
 
     currentRow = 0;
     ui->tableWidget->setCurrentCell(0,0);
+    ui->tableWidget->setFocus();
 }
 
 void MainDialog::OnAllStop()
