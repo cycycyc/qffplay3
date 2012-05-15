@@ -20,9 +20,13 @@ public:
     void close();
     bool isOk();
     VideoThread* getVideoThread() const {return vthread;}
+    void genVideoThread();
+    bool seekMs(int tsms);
+    bool seekFrame(qint64 frame);
 
 protected:
     virtual void run();
+
 private:
     // Basic FFmpeg stuff
     AVFormatContext *pFormatCtx;

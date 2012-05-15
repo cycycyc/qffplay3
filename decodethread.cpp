@@ -112,11 +112,59 @@ bool DecodeThread::openFile(QString filename)
    cout << "video codec: " << avcodec_get_name(pVideoCodecCtx->codec_id) << endl;
    cout << "audio codec: " << avcodec_get_name(pAudioCodecCtx->codec_id) << endl;
 
+   cout << "duration: " << pFormatCtx->duration << endl;
 
-   vthread = new VideoThread(videoQueue, videoMutex, pVideoCodecCtx, pFormatCtx, videoStream, this);
+   //seekMs(370000+pFormatCtx->start_time/1000);
+   seekMs((rand()%(pFormatCtx->duration/1000000))*1000);
 
    ok=true;
    return true;
+}
+
+void DecodeThread::genVideoThread()
+{
+   vthread = new VideoThread(videoQueue, videoMutex, pVideoCodecCtx, pFormatCtx, videoStream);
+}
+
+/**
+  \brief Seek to millisecond
+**/
+bool DecodeThread::seekMs(int tsms)
+{
+   //printf("**** SEEK TO ms %d. LLT: %d. LT: %d. LLF: %d. LF: %d. LastFrameOk: %d\n",tsms,LastLastFrameTime,LastFrameTime,LastLastFrameNumber,LastFrameNumber,(int)LastFrameOk);
+   cout << "tsms" << tsms << endl;
+   // Convert time into frame number
+   qint64 DesiredFrameNumber = av_rescale(tsms,pFormatCtx->streams[videoStream]->time_base.den,pFormatCtx->streams[videoStream]->time_base.num);
+   DesiredFrameNumber/=1000;
+
+   return seekFrame(DesiredFrameNumber);
+}
+/**
+  \brief Seek to frame
+**/
+bool DecodeThread::seekFrame(qint64 frame)
+{
+   //printf("**** seekFrame to %d. LLT: %d. LT: %d. LLF: %d. LF: %d. LastFrameOk: %d\n",(int)frame,LastLastFrameTime,LastFrameTime,LastLastFrameNumber,LastFrameNumber,(int)LastFrameOk);
+    cout << "frame" << frame << endl;
+   // Seek if:
+   // - we don't know where we are (Ok=false)
+   // - we know where we are but:
+   //    - the desired frame is after the last decoded frame (this could be optimized: if the distance is small, calling decodeSeekFrame may be faster than seeking from the last key frame)
+   //    - the desired frame is smaller or equal than the previous to the last decoded frame. Equal because if frame==LastLastFrameNumber we don't want the LastFrame, but the one before->we need to seek there
+   //if( (LastFrameOk==false) || ((LastFrameOk==true) && (frame<=LastLastFrameNumber || frame>LastFrameNumber) ) )
+   //{
+      //printf("\t avformat_seek_file\n");
+      if(avformat_seek_file(pFormatCtx,videoStream,frame,frame,frame,AVSEEK_FLAG_FRAME)<0)
+         return false;
+
+      avcodec_flush_buffers(pVideoCodecCtx);
+
+      //DesiredFrameNumber = frame;
+      //LastFrameOk=false;
+   //}
+   //printf("\t decodeSeekFrame\n");
+    return true;
+   //return decodeSeekFrame(frame);
 }
 
 bool DecodeThread::isOk()
@@ -128,22 +176,34 @@ bool DecodeThread::isOk()
 void DecodeThread::run()
 {
     if (!ok) return;
-    int lives = 3;
+    const int MAX_LIVES = 10000;
+    int lives = MAX_LIVES;
+
     forever
     {
         // Read a frame
         //cout << "I'm stucked here!" << endl;
         if(av_read_frame(pFormatCtx, &packet)<0)
         {
+            if (pFormatCtx->pb->eof_reached || pFormatCtx->pb->error)
+            {
+                cout << "end of stream" << endl;
+                break;
+            }
             //cout << "Read frame failed!! Remaining Lives: " << lives << endl;
-            //if (lives > 0)
+            if (lives > 0)
             {
                 lives--;
                 continue;
             }
-            //else
-            //break;                             // Frame read failed (e.g. end of stream)
+            else
+            {
+                cout << "out of live" << endl;
+                break;                             // Frame read failed (e.g. end of stream)
+            }
         }
+
+        lives = MAX_LIVES;
 
         //cout << "Packet of stream " << packet.stream_index << ", size " << packet.size << endl;
 

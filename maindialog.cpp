@@ -1,5 +1,6 @@
 #include "maindialog.h"
 #include "ui_maindialog.h"
+#include <ctime>
 #include <QFile>
 #include <QPainter>
 #include <QProgressBar>
@@ -13,36 +14,16 @@ MainDialog::MainDialog(QWidget *parent) :
     QFile file("URIs");
     file.open(QIODevice::ReadOnly);
     QString uri;
-    int count = 0;
     ui->tableWidget->setColumnCount(2);
-    QProgressBar bar;bar.adjustSize();
-    QRect rect = bar.geometry();
-    rect.moveCenter(QApplication::desktop()->geometry().center());
-    bar.setGeometry(rect);
-    bar.show();bar.repaint();
     while ((uri = QString(file.readLine())).size() > 1)
     {
         uri = uri.trimmed();
-        ui->tableWidget->insertRow(ui->tableWidget->rowCount());
-        ++count;
-        QTableWidgetItem* itemUri = new QTableWidgetItem(uri);
-        itemUri->setTextAlignment(Qt::AlignCenter);
-        ui->tableWidget->setItem(count-1, 0, itemUri);
         uris.append(uri);
         cout << uri.toStdString() << endl;
 
     }
-    bar.setFormat("%v/%m");bar.setRange(0, uris.size());
-    for (int i = 0; i < uris.size(); i++)
-    {
-        bar.setValue(i+1);bar.repaint();
-        DecodeThread* dt = new DecodeThread(this);
-        dt->openFile(uris[i]);
-        decoders.append(dt);
-    }
-    bar.close();
-    ui->tableWidget->resizeColumnsToContents();
 
+    connect(ui->initBtn, SIGNAL(clicked()), this, SLOT(OnInit()));
     connect(ui->beginBtn, SIGNAL(clicked()), this, SLOT(OnAllBegin()));
     connect(ui->stopBtn, SIGNAL(clicked()), this, SLOT(OnAllStop()));
     connect(ui->tableWidget, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(OnSelectVideo(int,int,int,int)));
@@ -50,11 +31,57 @@ MainDialog::MainDialog(QWidget *parent) :
     currentRow = 0;
     curVideoThread = NULL;
     needResize = true;
+
+    ui->beginBtn->setEnabled(false);
+    ui->stopBtn->setEnabled(false);
+    initializing = false;
 }
 
 MainDialog::~MainDialog()
 {
     delete ui;
+}
+
+void MainDialog::OnInit()
+{
+    if (initializing) return;
+    QStringList tempuris;
+    srand((unsigned int)time(0));
+    for (int i = 0; i < ui->spinBox->value(); i++)
+    {
+        int tmp = rand() % uris.size();
+        tempuris.append(uris[tmp]);
+        ui->tableWidget->insertRow(ui->tableWidget->rowCount());
+        QTableWidgetItem* itemUri = new QTableWidgetItem(uris[tmp]);
+        itemUri->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(i, 0, itemUri);
+    }
+
+    uris = tempuris;
+
+    ui->tableWidget->resizeColumnsToContents();
+    ui->initBtn->setText("Initializing ...");
+
+    workThread = new WorkThread(decoders, uris);
+    connect(workThread, SIGNAL(finished()), this, SLOT(OnInitFinised()));
+    connect(workThread, SIGNAL(progress(int)), this, SLOT(OnProgress(int)));
+    workThread->start();
+    initializing = true;
+}
+
+void MainDialog::OnInitFinised()
+{
+    ui->beginBtn->setEnabled(true);
+    ui->initBtn->setEnabled(false);
+    ui->initBtn->setText("Initialized");
+    initializing = false;
+}
+
+void MainDialog::OnProgress(int val)
+{
+    QString str = "Initializing %1/%2";
+    str = str.arg(val).arg(uris.size());
+    ui->initBtn->setText(str);
 }
 
 void MainDialog::paintEvent(QPaintEvent *evt)
@@ -81,7 +108,11 @@ void MainDialog::OnAllBegin()
 {
     DecodeThread* dt;
     foreach (dt, decoders) {
-        if (dt->isOk()) dt->start();
+        if (dt->isOk())
+        {
+            dt->start();
+            dt->genVideoThread();
+        }
     }
 
     curVideoThread = decoders[0]->getVideoThread();
@@ -92,15 +123,25 @@ void MainDialog::OnAllBegin()
     currentRow = 0;
     ui->tableWidget->setCurrentCell(0,0);
     ui->tableWidget->setFocus();
+    ui->beginBtn->setEnabled(false);
+    ui->stopBtn->setEnabled(true);
 }
 
 void MainDialog::OnAllStop()
 {
-
+    DecodeThread* dt;
+    foreach (dt, decoders) {
+        dt->terminate();
+    }
+    foreach (dt, decoders) {
+        dt->wait();
+    }
+    close();
 }
 
 void MainDialog::OnSelectVideo(int row, int, int, int)
 {
+    if (initializing) return;
     if (currentRow == row) return;
 
     curVideoThread->setActived(false);

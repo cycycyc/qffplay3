@@ -118,7 +118,6 @@ bool VideoThread::decodeSeekFrame(qint64 after)
          if (actived)
          {
 
-
              //printf("used %d out of %d bytes\n",len,packet.size);
 
              //printf("Frame type: ");
@@ -141,8 +140,10 @@ bool VideoThread::decodeSeekFrame(qint64 after)
              // Did we get a video frame?
              if(frameFinished)
              {
+
                 AVRational millisecondbase = {1, 1000};
                 qint64 f = packet.dts;
+                //cout << 'f' << packet.dts << '\t' << packet.pts << endl;
                 qint64 t = av_rescale_q(packet.dts,pFormatCtx->streams[videoStream]->time_base,millisecondbase);
                 if(LastFrameOk==false)
                 {
@@ -211,8 +212,9 @@ int VideoThread::getVideoLengthMs()
 
 int VideoThread::getCurrentMs()
 {
-    return LastLastFrameTime - pFormatCtx->start_time_realtime - 10267;
+    return LastFrameTime - pFormatCtx->start_time/1000;
 }
+
 
 void VideoThread::run()
 {
