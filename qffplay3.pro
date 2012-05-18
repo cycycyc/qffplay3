@@ -1,13 +1,25 @@
 ##############
 
-win32:INCLUDEPATH += D:/developing/ffmpeg/ffmpeg/include
-win32:LIBS += -LD:/developing/ffmpeg/ffmpeg/lib
+win32:
+{
+    INCLUDEPATH += D:/developing/ffmpeg/ffmpeg/include
+    LIBS += \
+        -LD:/developing/ffmpeg/ffmpeg/lib \
+        -lavcodec \
+        -lavformat \
+        -lavutil \
+        -lswscale
+}
 
-LIBS += \
-    -lavcodec \
-    -lavformat \
-    -lavutil \
-    -lswscale
+unix:
+{
+    INCLUDEPATH = /usr/local/include/
+    LIBS = \
+        /usr/local/lib/libavcodec.so \
+        /usr/local/lib/libavformat.so \
+        /usr/local/lib/libavutil.so \
+        /usr/local/lib/libswscale.so
+}
 
 SOURCES += \
     main.cpp \
