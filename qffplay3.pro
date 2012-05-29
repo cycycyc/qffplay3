@@ -1,7 +1,6 @@
 ##############
 
-win32:
-{
+win32{
     INCLUDEPATH += D:/developing/ffmpeg/ffmpeg/include
     LIBS += \
         -LD:/developing/ffmpeg/ffmpeg/lib \
@@ -11,8 +10,7 @@ win32:
         -lswscale
 }
 
-unix:
-{
+unix{
     INCLUDEPATH = /usr/local/include/
     LIBS = \
         /usr/local/lib/libavcodec.so \
