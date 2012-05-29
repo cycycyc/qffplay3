@@ -27,12 +27,10 @@ VideoThread::VideoThread(QList<AVPacket> &q, QMutex *m, AVCodecContext *_pCodecC
     if (pCodecCtx->width*pCodecCtx->height == 0) return;
     numBytes=avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width,pCodecCtx->height);
     cout << "numBytes:" << numBytes << endl;
-    buffer=new uint8_t[numBytes];
-
+    //buffer=new uint8_t[numBytes];
 
     // Assign appropriate parts of buffer to image planes in pFrameRGB
-    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24,
-        pCodecCtx->width, pCodecCtx->height);
+    //avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height);
 
     connect(&playTimer, SIGNAL(timeout()), this, SLOT(OnPlayTimeout()));
 
@@ -118,10 +116,16 @@ bool VideoThread::decodeSeekFrame(qint64 after)
          AVPacket packet = queue.takeFirst();
          mutex->unlock();
          //cout << 'f' << packet.dts << '\t' << packet.pts << endl;
-         avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
 
          if (actived)
          {
+             if (!buffer)
+             {
+                buffer = new uint8_t[numBytes];
+                avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height);
+             }
+
+             avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
 
              //printf("used %d out of %d bytes\n",len,packet.size);
 
@@ -197,6 +201,15 @@ bool VideoThread::decodeSeekFrame(qint64 after)
 
                 } // frame of interest
              }  // frameFinished
+         }
+         else
+         {
+             if (buffer)
+             {
+                delete [] buffer;
+                //av_free(pFrameRGB);
+                buffer = NULL;
+             }
          }
         // stream_index==videoStream
       av_free_packet(&packet);      // Free the packet that was allocated by av_read_frame

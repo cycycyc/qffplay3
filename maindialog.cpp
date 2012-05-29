@@ -50,8 +50,8 @@ void MainDialog::OnInit()
     srand((unsigned int)time(0));
     for (int i = 0; i < ui->spinBox->value(); i++)
     {
-        //int tmp = rand() % uris.size();
-        int tmp = i;
+        int tmp = rand() % uris.size();
+        //int tmp = i;
         tempuris.append(uris[tmp]);
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
         QTableWidgetItem* itemUri = new QTableWidgetItem(uris[tmp]);
