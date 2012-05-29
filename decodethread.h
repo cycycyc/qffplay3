@@ -50,6 +50,7 @@ private:
     QMutex* videoMutex;
     QMutex* audioMutex;
 
+    QString fileName;
     VideoThread* vthread;
 
 };

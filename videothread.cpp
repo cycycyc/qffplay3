@@ -23,8 +23,12 @@ VideoThread::VideoThread(QList<AVPacket> &q, QMutex *m, AVCodecContext *_pCodecC
     pFrameRGB=avcodec_alloc_frame();
 
     // Determine required buffer size and allocate buffer
+    cout << "width height:" << pCodecCtx->width << pCodecCtx->height << endl;
+    if (pCodecCtx->width*pCodecCtx->height == 0) return;
     numBytes=avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width,pCodecCtx->height);
+    cout << "numBytes:" << numBytes << endl;
     buffer=new uint8_t[numBytes];
+
 
     // Assign appropriate parts of buffer to image planes in pFrameRGB
     avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24,

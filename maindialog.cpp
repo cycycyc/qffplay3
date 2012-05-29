@@ -50,7 +50,8 @@ void MainDialog::OnInit()
     srand((unsigned int)time(0));
     for (int i = 0; i < ui->spinBox->value(); i++)
     {
-        int tmp = rand() % uris.size();
+        //int tmp = rand() % uris.size();
+        int tmp = i;
         tempuris.append(uris[tmp]);
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
         QTableWidgetItem* itemUri = new QTableWidgetItem(uris[tmp]);
@@ -122,7 +123,9 @@ void MainDialog::paintEvent(QPaintEvent *evt)
 void MainDialog::OnAllBegin()
 {
     DecodeThread* dt;
+    int count = 0;
     foreach (dt, decoders) {
+        cout << count++ << endl;
         if (dt->isOk())
         {
             dt->start();
@@ -160,7 +163,7 @@ void MainDialog::OnSelectVideo(int row, int, int, int)
 {
     if (initializing) return;
     if (currentRow == row) return;
-
+    if (!decoders[row]->isOk()) return;
     curVideoThread->setActived(false);
     disconnect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
 
