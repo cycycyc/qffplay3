@@ -61,6 +61,7 @@ private:
     bool needResize;
     WorkThread* workThread;
     bool initializing;
+    int curNum;
 };
 
 #endif // MAINDIALOG_H

@@ -1,5 +1,5 @@
 #include "decodethread.h"
-
+#include <ctime>
 
 
 DecodeThread::DecodeThread(QObject *parent) :
@@ -113,9 +113,13 @@ bool DecodeThread::openFile(QString filename)
    cout << "audio codec: " << avcodec_get_name(pAudioCodecCtx->codec_id) << endl;
 
    cout << "duration: " << pFormatCtx->duration << endl;
+   cout << "start_time: " << pFormatCtx->start_time << endl;
+   cout << "start_time_real: " << pFormatCtx->start_time_realtime << endl;
 
-   //seekMs(370000+pFormatCtx->start_time/1000);
-   seekMs((rand()%(pFormatCtx->duration/1000000))*1000);
+   seekMs(350000+pFormatCtx->start_time/1000);
+   srand((unsigned int)time(0));
+   cout << rand();
+   //seekMs((rand()%(pFormatCtx->duration/1000000))*1000);
 
    ok=true;
    return true;

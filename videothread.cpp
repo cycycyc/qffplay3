@@ -113,6 +113,7 @@ bool VideoThread::decodeSeekFrame(qint64 after)
          if (queue.empty()) {mutex->unlock(); return false;}
          AVPacket packet = queue.takeFirst();
          mutex->unlock();
+         //cout << 'f' << packet.dts << '\t' << packet.pts << endl;
          avcodec_decode_video2(pCodecCtx,pFrame,&frameFinished,&packet);
 
          if (actived)
@@ -203,15 +204,18 @@ bool VideoThread::decodeSeekFrame(qint64 after)
 
 int VideoThread::getVideoLengthMs()
 {
+
    int secs = pFormatCtx->duration / AV_TIME_BASE;
    int us = pFormatCtx->duration % AV_TIME_BASE;
    int l = secs*1000 + us/1000;
 
-   return l;
+   return l + 3467;
+
 }
 
 int VideoThread::getCurrentMs()
 {
+    //cout << "cur: " << LastFrameTime - pFormatCtx->start_time/1000 << endl;
     return LastFrameTime - pFormatCtx->start_time/1000;
 }
 

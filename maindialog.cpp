@@ -29,6 +29,7 @@ MainDialog::MainDialog(QWidget *parent) :
     connect(ui->tableWidget, SIGNAL(currentCellChanged(int,int,int,int)), this, SLOT(OnSelectVideo(int,int,int,int)));
 
     currentRow = 0;
+    curNum = 0;
     curVideoThread = NULL;
     needResize = true;
 
@@ -54,7 +55,7 @@ void MainDialog::OnInit()
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
         QTableWidgetItem* itemUri = new QTableWidgetItem(uris[tmp]);
         itemUri->setTextAlignment(Qt::AlignCenter);
-        ui->tableWidget->setItem(i, 0, itemUri);
+        ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 0, itemUri);
     }
 
     uris = tempuris;
@@ -75,6 +76,20 @@ void MainDialog::OnInitFinised()
     ui->initBtn->setEnabled(false);
     ui->initBtn->setText("Initialized");
     initializing = false;
+
+    if (curNum > 0)
+    {
+        for (int i = curNum; i < decoders.size(); i++)
+        {
+            if (decoders[i]->isOk())
+            {
+                decoders[i]->start();
+                decoders[i]->genVideoThread();
+            }
+        }
+        ui->beginBtn->setEnabled(false);
+    }
+    curNum += uris.size();
 }
 
 void MainDialog::OnProgress(int val)
@@ -125,6 +140,8 @@ void MainDialog::OnAllBegin()
     ui->tableWidget->setFocus();
     ui->beginBtn->setEnabled(false);
     ui->stopBtn->setEnabled(true);
+    ui->initBtn->setText("More");
+    ui->initBtn->setEnabled(true);
 }
 
 void MainDialog::OnAllStop()
