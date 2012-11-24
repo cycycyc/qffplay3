@@ -13,11 +13,13 @@ win32{
 unix{
     INCLUDEPATH = /usr/local/include/
     LIBS = \
-        /usr/local/lib/libavcodec.so \
-        /usr/local/lib/libavformat.so \
-        /usr/local/lib/libavutil.so \
-        /usr/local/lib/libswscale.so
+        -lavcodec \
+        -lavformat \
+        -lavutil \
+        -lswscale
 }
+
+CONFIG += static
 
 SOURCES += \
     main.cpp \

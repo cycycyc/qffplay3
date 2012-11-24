@@ -11,16 +11,18 @@ MainDialog::MainDialog(QWidget *parent) :
     ui(new Ui::MainDialog)
 {
     ui->setupUi(this);
-    QFile file("URIs");
-    file.open(QIODevice::ReadOnly);
-    QString uri;
-    ui->tableWidget->setColumnCount(2);
-    while ((uri = QString(file.readLine())).size() > 1)
+    QFile file("URIs.txt");
+    if (file.open(QIODevice::ReadOnly))
     {
-        uri = uri.trimmed();
-        uris.append(uri);
-        cout << uri.toStdString() << endl;
+        QString uri;
+        ui->tableWidget->setColumnCount(2);
+        while ((uri = QString(file.readLine())).size() > 1)
+        {
+            uri = uri.trimmed();
+            uris.append(uri);
+            cout << uri.toStdString() << endl;
 
+        }
     }
 
     connect(ui->initBtn, SIGNAL(clicked()), this, SLOT(OnInit()));
@@ -35,7 +37,9 @@ MainDialog::MainDialog(QWidget *parent) :
 
     ui->beginBtn->setEnabled(false);
     ui->stopBtn->setEnabled(false);
+
     initializing = false;
+    more = false;
 }
 
 MainDialog::~MainDialog()
@@ -46,6 +50,7 @@ MainDialog::~MainDialog()
 void MainDialog::OnInit()
 {
     if (initializing) return;
+    if (uris.size() == 0) return;
     QStringList tempuris;
     srand((unsigned int)time(0));
     for (int i = 0; i < ui->spinBox->value(); i++)
@@ -91,6 +96,11 @@ void MainDialog::OnInitFinised()
         ui->beginBtn->setEnabled(false);
     }
     curNum += uris.size();
+    if (more)
+    {
+        ui->initBtn->setEnabled(true);
+        ui->initBtn->setText("More");
+    }
 }
 
 void MainDialog::OnProgress(int val)
@@ -104,20 +114,33 @@ void MainDialog::paintEvent(QPaintEvent *evt)
 {
     QDialog::paintEvent(evt);
     if (!curVideoThread || curVideoThread->LastFrame.isNull()) return;
-    if (needResize)
+    QRect r, c;
+    r.setTopLeft(ui->screen->pos()+ui->screenBox->pos());
+    c = r;
+    QSize s = curVideoThread->LastFrame.size();
+    s.scale(ui->screen->size(), Qt::KeepAspectRatio);
+    c.setSize(ui->screen->size());
+    r.setSize(s);
+    /*if (needResize)
     {
-        ui->screen->setFixedSize(curVideoThread->LastFrame.size());
+        s = curVideoThread->LastFrame.size();
+        if (s.width() > 1000 || s.height() > 800)
+            s.scale(1000, 800, Qt::KeepAspectRatio);
+        r.setSize(s);
+        ui->screen->setGeometry(r);
         needResize = false;
-    }
+    }*/
+    r.moveCenter(c.center());
+
     QPainter p(this);
-    p.drawImage(ui->screen->pos()+ui->screenBox->pos(), curVideoThread->LastFrame);
+    p.drawImage(r, curVideoThread->LastFrame);
 
     int curSec = curVideoThread->getCurrentMs()/1000;
     int totalSec = curVideoThread->getVideoLengthMs()/1000;
 
-    QString text;
-    text = text.sprintf("Time: %d:%02d/%d:%02d", curSec/60, curSec%60, totalSec/60, totalSec%60);
-    ui->label->setText(text);
+    //QString text;
+    //text = text.sprintf("Time: %d:%02d/%d:%02d", curSec/60, curSec%60, totalSec/60, totalSec%60);
+    //ui->label->setText(text);
 }
 
 void MainDialog::OnAllBegin()
@@ -145,6 +168,8 @@ void MainDialog::OnAllBegin()
     ui->stopBtn->setEnabled(true);
     ui->initBtn->setText("More");
     ui->initBtn->setEnabled(true);
+    needResize = true;
+    more = true;
 }
 
 void MainDialog::OnAllStop()

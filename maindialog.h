@@ -31,6 +31,7 @@ protected:
 private:
     QList<DecodeThread*>& decoders;
     QStringList uris;
+    QSize s;
 };
 
 class MainDialog : public QDialog
@@ -62,6 +63,7 @@ private:
     WorkThread* workThread;
     bool initializing;
     int curNum;
+    bool more;
 };
 
 #endif // MAINDIALOG_H

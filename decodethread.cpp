@@ -116,11 +116,12 @@ bool DecodeThread::openFile(QString filename)
    cout << "duration: " << pFormatCtx->duration << endl;
    cout << "start_time: " << pFormatCtx->start_time << endl;
    cout << "start_time_real: " << pFormatCtx->start_time_realtime << endl;
+   cout << "thread count: " << pVideoCodecCtx->thread_count << endl;
 
    //seekMs(350000+pFormatCtx->start_time/1000);
-   srand((unsigned int)time(0));
+
    cout << rand();
-   //seekMs((rand()%(pFormatCtx->duration/1000000))*1000);
+   seekMs((rand()%(pFormatCtx->duration/1000000/2))*1000);
 
    ok=true;
    return true;
@@ -210,8 +211,8 @@ void DecodeThread::run()
         }
 
         lives = MAX_LIVES;
-        if (timer.elapsed() > 1000)
-            cout << fileName.toStdString() << " time: " << timer.elapsed() << '\t';
+        //if (timer.elapsed() > 1000)
+            //cout << fileName.toStdString() << " time: " << timer.elapsed() << '\t';
         //cout << "Packet of stream " << packet.stream_index << ", size " << packet.size << endl;
 
         if(packet.stream_index==videoStream)
@@ -222,7 +223,19 @@ void DecodeThread::run()
         }
         else av_free_packet(&packet);
 
-        if (timer.elapsed() > 1000) cout << timer.elapsed() << endl;
+        while (1)
+        {
+            videoMutex->lock();
+            if (videoQueue.size() < 100)
+            {
+                videoMutex->unlock();
+                break;
+            }
+            videoMutex->unlock();
+            this->msleep(10);
+        }
+
+        //if (timer.elapsed() > 1000) cout << timer.elapsed() << endl;
         timer.restart();
     }
 }
