@@ -1,9 +1,9 @@
 ##############
 
 win32{
-    INCLUDEPATH += D:/developing/ffmpeg/ffmpeg/include
+    INCLUDEPATH += E:/developing/ffmpeg/ffmpeg/include
     LIBS += \
-        -LD:/developing/ffmpeg/ffmpeg/lib \
+        -LE:/developing/ffmpeg/ffmpeg/lib \
         -lavcodec \
         -lavformat \
         -lavutil \
