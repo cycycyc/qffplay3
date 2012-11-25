@@ -31,7 +31,6 @@ protected:
 private:
     QList<DecodeThread*>& decoders;
     QStringList uris;
-    QSize s;
 };
 
 class MainDialog : public QDialog
@@ -56,7 +55,7 @@ protected:
 private:
     Ui::MainDialog *ui;
     QList<DecodeThread*> decoders;
-    QStringList uris;
+    QStringList uris_ori, uris_cur;
     int currentRow;
     VideoThread* curVideoThread;
     bool needResize;

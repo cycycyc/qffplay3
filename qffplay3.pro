@@ -19,8 +19,6 @@ unix{
         -lswscale
 }
 
-CONFIG += static
-
 SOURCES += \
     main.cpp \
     decodethread.cpp \

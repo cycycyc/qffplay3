@@ -19,7 +19,7 @@ MainDialog::MainDialog(QWidget *parent) :
         while ((uri = QString(file.readLine())).size() > 1)
         {
             uri = uri.trimmed();
-            uris.append(uri);
+            uris_ori.append(uri);
             cout << uri.toStdString() << endl;
 
         }
@@ -50,26 +50,26 @@ MainDialog::~MainDialog()
 void MainDialog::OnInit()
 {
     if (initializing) return;
-    if (uris.size() == 0) return;
+    if (uris_ori.size() == 0) return;
     QStringList tempuris;
     srand((unsigned int)time(0));
     for (int i = 0; i < ui->spinBox->value(); i++)
     {
-        int tmp = rand() % uris.size();
+        int tmp = rand() % uris_ori.size();
         //int tmp = i;
-        tempuris.append(uris[tmp]);
+        tempuris.append(uris_ori[tmp]);
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
-        QTableWidgetItem* itemUri = new QTableWidgetItem(uris[tmp]);
+        QTableWidgetItem* itemUri = new QTableWidgetItem(uris_ori[tmp]);
         itemUri->setTextAlignment(Qt::AlignCenter);
         ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 0, itemUri);
     }
 
-    uris = tempuris;
+    uris_cur = tempuris;
 
     ui->tableWidget->resizeColumnsToContents();
     ui->initBtn->setText("Initializing ...");
 
-    workThread = new WorkThread(decoders, uris);
+    workThread = new WorkThread(decoders, uris_cur);
     connect(workThread, SIGNAL(finished()), this, SLOT(OnInitFinised()));
     connect(workThread, SIGNAL(progress(int)), this, SLOT(OnProgress(int)));
     workThread->start();
@@ -95,7 +95,7 @@ void MainDialog::OnInitFinised()
         }
         ui->beginBtn->setEnabled(false);
     }
-    curNum += uris.size();
+    curNum += uris_cur.size();
     if (more)
     {
         ui->initBtn->setEnabled(true);
@@ -106,7 +106,7 @@ void MainDialog::OnInitFinised()
 void MainDialog::OnProgress(int val)
 {
     QString str = "Initializing %1/%2";
-    str = str.arg(val).arg(uris.size());
+    str = str.arg(val).arg(uris_cur.size());
     ui->initBtn->setText(str);
 }
 
