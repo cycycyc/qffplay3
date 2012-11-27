@@ -13,12 +13,19 @@ int main(int argc, char** argv)
         setrlimit(RLIMIT_NOFILE, &r);
         cout << "rlimit after:" << r.rlim_cur << '\t' << r.rlim_max << endl;
     }
+    if (getrlimit(RLIMIT_STACK, &r) >= 0)
+    {
+        cout << "rlimit before:" << r.rlim_cur << '\t' << r.rlim_max << endl;
+        r.rlim_cur = 1024;
+        setrlimit(RLIMIT_NOFILE, &r);
+        cout << "rlimit after:" << r.rlim_cur << '\t' << r.rlim_max << endl;
+    }
     avcodec_register_all();
     av_register_all();
     avformat_network_init();
     QApplication app(argc, argv);
     srand((unsigned int)time(0));
-    QThreadPool::globalInstance()->setMaxThreadCount(1024);
+    QThreadPool::globalInstance()->setMaxThreadCount(10240);
     MainDialog d;
     d.show();
     return app.exec();

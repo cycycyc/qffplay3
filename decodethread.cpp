@@ -100,6 +100,15 @@ bool DecodeThread::openFile(QString filename)
    if(pVideoCodec==NULL && pAudioCodec==NULL)
        return false; // Codec not found
 
+   cout << "iformat: " << pFormatCtx->iformat->name << endl;
+   cout << "video codec: " << avcodec_get_name(pVideoCodecCtx->codec_id) << endl;
+   cout << "audio codec: " << avcodec_get_name(pAudioCodecCtx->codec_id) << endl;
+   cout << "duration: " << pFormatCtx->duration << endl;
+   cout << "start_time: " << pFormatCtx->start_time << endl;
+   cout << "start_time_real: " << pFormatCtx->start_time_realtime << endl;
+   pVideoCodecCtx->thread_count = 5;
+   cout << "thread count: " << pVideoCodecCtx->thread_count << endl;
+
    // Open codec
    if(avcodec_open2(pVideoCodecCtx, pVideoCodec, NULL)<0)// && avcodec_open2(pAudioCodecCtx, pAudioCodec, NULL)<0)
        return false; // Could not open codec
@@ -108,15 +117,6 @@ bool DecodeThread::openFile(QString filename)
    // codecs
    if(pVideoCodecCtx->time_base.num>1000 && pVideoCodecCtx->time_base.den==1)
      pVideoCodecCtx->time_base.den=1000;
-
-   cout << "iformat: " << pFormatCtx->iformat->name << endl;
-   cout << "video codec: " << avcodec_get_name(pVideoCodecCtx->codec_id) << endl;
-   cout << "audio codec: " << avcodec_get_name(pAudioCodecCtx->codec_id) << endl;
-
-   cout << "duration: " << pFormatCtx->duration << endl;
-   cout << "start_time: " << pFormatCtx->start_time << endl;
-   cout << "start_time_real: " << pFormatCtx->start_time_realtime << endl;
-   cout << "thread count: " << pVideoCodecCtx->thread_count << endl;
 
    //seekMs(350000+pFormatCtx->start_time/1000);
 
