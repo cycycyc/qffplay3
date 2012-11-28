@@ -5,9 +5,10 @@
 DecodeThread::DecodeThread(QObject *parent) :
     QThread(parent)
 {
-    InitVars();
-    initCodec();
     vthread = NULL;
+    videoMutex = NULL;
+    audioMutex = NULL;
+    InitVars();
 }
 /**
    \brief Constructor - opens directly a video
@@ -26,7 +27,9 @@ void DecodeThread::InitVars()
     pAudioCodecCtx=0;
     pVideoCodec=0;
     pAudioCodec=0;
+    if (videoMutex) delete videoMutex;
     videoMutex = new QMutex;
+    if (audioMutex) delete audioMutex;
     audioMutex = new QMutex;
 }
 
@@ -63,7 +66,7 @@ bool DecodeThread::initCodec()
 bool DecodeThread::openFile(QString filename)
 {
    // Close last video..
-   close();
+    close();
     fileName = filename;
 
 
@@ -106,7 +109,7 @@ bool DecodeThread::openFile(QString filename)
    cout << "duration: " << pFormatCtx->duration << endl;
    cout << "start_time: " << pFormatCtx->start_time << endl;
    cout << "start_time_real: " << pFormatCtx->start_time_realtime << endl;
-   pVideoCodecCtx->thread_count = 5;
+   pVideoCodecCtx->thread_count = 2;
    cout << "thread count: " << pVideoCodecCtx->thread_count << endl;
 
    // Open codec
@@ -121,7 +124,9 @@ bool DecodeThread::openFile(QString filename)
    //seekMs(350000+pFormatCtx->start_time/1000);
 
    cout << rand();
-   seekMs((rand()%(pFormatCtx->duration/1000000/2))*1000);
+   if (!reachEnd)
+        seekMs((rand()%(pFormatCtx->duration/1000000))*1000);
+   //seekMs(pFormatCtx->duration/1000);
 
    ok=true;
    return true;
@@ -129,7 +134,8 @@ bool DecodeThread::openFile(QString filename)
 
 void DecodeThread::genVideoThread()
 {
-   vthread = new VideoThread(videoQueue, videoMutex, pVideoCodecCtx, pFormatCtx, videoStream);
+    if (vthread) delete vthread;
+    vthread = new VideoThread(videoQueue, videoMutex, pVideoCodecCtx, pFormatCtx, videoStream);
 }
 
 /**
@@ -182,6 +188,7 @@ bool DecodeThread::isOk()
 void DecodeThread::run()
 {
     if (!ok) return;
+    reachEnd = false;
     const int MAX_LIVES = 10000;
     int lives = MAX_LIVES;
     QTime timer;
@@ -195,6 +202,7 @@ void DecodeThread::run()
             if (pFormatCtx->pb->eof_reached)
             {
                 cout << "end of stream" << endl;
+                reachEnd = true;
                 break;
             }
             //cout << "Read frame failed!! Remaining Lives: " << lives << endl;

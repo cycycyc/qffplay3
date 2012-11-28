@@ -33,6 +33,18 @@ private:
     QStringList uris;
 };
 
+class ReopenThread : public QThread
+{
+    Q_OBJECT
+public:
+    ReopenThread(DecodeThread* d) : dt(d){}
+    virtual void run()
+    {
+        dt->openFile();
+    }
+    DecodeThread* dt;
+};
+
 class MainDialog : public QDialog
 {
     Q_OBJECT
@@ -48,6 +60,8 @@ public slots:
     void OnAllStop();
     void OnProgress(int);
     void OnSelectVideo(int,int,int,int);
+    void OnExit();
+    void OnReopen();
 
 protected:
     void paintEvent(QPaintEvent *evt);

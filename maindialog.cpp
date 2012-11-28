@@ -82,6 +82,7 @@ void MainDialog::OnInitFinised()
     ui->initBtn->setEnabled(false);
     ui->initBtn->setText("Initialized");
     initializing = false;
+    delete workThread;
 
     if (curNum > 0)
     {
@@ -91,6 +92,7 @@ void MainDialog::OnInitFinised()
             {
                 decoders[i]->start();
                 decoders[i]->genVideoThread();
+                connect(decoders[i], SIGNAL(finished()), this, SLOT(OnExit()));
             }
         }
         ui->beginBtn->setEnabled(false);
@@ -153,6 +155,7 @@ void MainDialog::OnAllBegin()
         {
             dt->start();
             dt->genVideoThread();
+            connect(dt, SIGNAL(finished()), this, SLOT(OnExit()));
         }
     }
 
@@ -198,4 +201,40 @@ void MainDialog::OnSelectVideo(int row, int, int, int)
 
     currentRow = row;
     needResize = true;
+}
+
+void MainDialog::OnExit()
+{
+    cout << "decodethread exit" << endl;
+    DecodeThread* dt = (DecodeThread *) sender();
+    ReopenThread* thread = new ReopenThread(dt);
+    if (curVideoThread == dt->getVideoThread())
+    {
+        curVideoThread->setActived(false);
+        disconnect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+        curVideoThread = NULL;
+    }
+    dt->deleteVideoThread();
+    connect(thread, SIGNAL(finished()), this, SLOT(OnReopen()));
+    thread->start();
+}
+
+void MainDialog::OnReopen()
+{
+    cout << "Reopen" << endl;
+    ReopenThread* thread = (ReopenThread *) sender();
+    if (thread->dt->isOk())
+    {
+        thread->dt->start();
+        thread->dt->genVideoThread();
+        if (curVideoThread == NULL)
+        {
+            cout << "null" << endl;
+            curVideoThread = thread->dt->getVideoThread();
+            curVideoThread->setActived(true);
+            connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+        }
+    }
+
+    delete thread;
 }

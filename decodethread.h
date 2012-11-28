@@ -8,7 +8,7 @@
 #include "ffmpeg.h"
 #include "videothread.h"
 
-class DecodeThread : public QThread
+class   DecodeThread : public QThread
 {
     Q_OBJECT
 public:
@@ -16,10 +16,12 @@ public:
     
     ~DecodeThread();
 
+    bool openFile() {return openFile(fileName);}
     bool openFile(QString file);
     void close();
     bool isOk();
     VideoThread* getVideoThread() const {return vthread;}
+    void deleteVideoThread() {if (vthread) delete vthread; vthread = NULL;}
     void genVideoThread();
     bool seekMs(int tsms);
     bool seekFrame(qint64 frame);
@@ -40,6 +42,7 @@ private:
 
     // State infos for the wrapper
     bool ok;
+    bool reachEnd;
 
     // Initialization functions
     bool initCodec();
