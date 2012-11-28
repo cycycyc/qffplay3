@@ -20,6 +20,7 @@ int main(int argc, char** argv)
         setrlimit(RLIMIT_NOFILE, &r);
         cout << "rlimit after:" << r.rlim_cur << '\t' << r.rlim_max << endl;
     }
+
     avcodec_register_all();
     av_register_all();
     avformat_network_init();
