@@ -1,13 +1,13 @@
 #include <QApplication>
 #include <QThreadPool>
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
     #include <sys/resource.h>
 #endif
 #include "maindialog.h"
 
 int main(int argc, char** argv)
 {
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
     rlimit r;
     if (getrlimit(RLIMIT_NOFILE, &r) >= 0)
     {
