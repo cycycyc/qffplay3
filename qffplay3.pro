@@ -1,6 +1,6 @@
 ##############
 
-win32{
+win32 {
     INCLUDEPATH += E:/developing/ffmpeg/ffmpeg/include
     LIBS += \
         -LE:/developing/ffmpeg/ffmpeg/lib \
@@ -10,7 +10,7 @@ win32{
         -lswscale
 }
 
-mac{
+macx {
     INCLUDEPATH = /usr/local/include/
     LIBS = \
         -lavcodec \
@@ -19,7 +19,7 @@ mac{
         -lswscale
 }
 
-linux{
+unix:!mac {
     INCLUDEPATH = /usr/local/include/
     LIBS = \
         /usr/local/lib/libavcodec.a \
