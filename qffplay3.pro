@@ -10,13 +10,23 @@ win32{
         -lswscale
 }
 
-unix{
+mac{
     INCLUDEPATH = /usr/local/include/
     LIBS = \
         -lavcodec \
         -lavformat \
         -lavutil \
         -lswscale
+}
+
+linux{
+    INCLUDEPATH = /usr/local/include/
+    LIBS = \
+        /usr/local/lib/libavcodec.a \
+        /usr/local/lib/libavformat.a \
+        /usr/local/lib/libavutil.a \
+        /usr/local/lib/libswscale.a \
+        /usr/local/lib/libx264.a
 }
 
 SOURCES += \
