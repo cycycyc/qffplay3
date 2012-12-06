@@ -1,10 +1,13 @@
 #include <QApplication>
 #include <QThreadPool>
-#include <sys/resource.h>
+#ifdef Q_OS_LINUX
+    #include <sys/resource.h>
+#endif
 #include "maindialog.h"
 
 int main(int argc, char** argv)
 {
+#ifdef Q_OS_LINUX
     rlimit r;
     if (getrlimit(RLIMIT_NOFILE, &r) >= 0)
     {
@@ -20,7 +23,7 @@ int main(int argc, char** argv)
         setrlimit(RLIMIT_NOFILE, &r);
         cout << "rlimit after:" << r.rlim_cur << '\t' << r.rlim_max << endl;
     }
-
+#endif
     avcodec_register_all();
     av_register_all();
     avformat_network_init();
