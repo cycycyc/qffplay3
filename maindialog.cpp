@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QProgressBar>
 #include <QDesktopWidget>
+#include <QMessageBox>
 
 MainDialog::MainDialog(QWidget *parent) :
     QDialog(parent),
@@ -16,6 +17,7 @@ MainDialog::MainDialog(QWidget *parent) :
     {
         QString uri;
         ui->tableWidget->setColumnCount(2);
+        ui->tableWidget->setColumnWidth(1,0);
         while ((uri = QString(file.readLine())).size() > 1)
         {
             uri = uri.trimmed();
@@ -94,6 +96,12 @@ void MainDialog::OnInitFinised()
                 decoders[i]->genVideoThread();
                 connect(decoders[i], SIGNAL(finished()), this, SLOT(OnExit()));
             }
+            else
+            {
+                QTableWidgetItem* itemUri = ui->tableWidget->item(i, 0);
+                QString itemString = "(open uri error)" + itemUri->text();
+                itemUri->setText(itemString);
+            }
         }
         ui->beginBtn->setEnabled(false);
     }
@@ -147,22 +155,33 @@ void MainDialog::paintEvent(QPaintEvent *evt)
 
 void MainDialog::OnAllBegin()
 {
-    DecodeThread* dt;
-    int count = 0;
-    foreach (dt, decoders) {
-        cout << count++ << endl;
+    for (int i = 0; i < decoders.size(); i++)
+    {
+        DecodeThread* dt = decoders[i];
         if (dt->isOk())
         {
             dt->start();
             dt->genVideoThread();
             connect(dt, SIGNAL(finished()), this, SLOT(OnExit()));
         }
+        else
+        {
+            QTableWidgetItem* itemUri = ui->tableWidget->item(i, 0);
+            QString itemString = "(open uri error)" + itemUri->text();
+            itemUri->setText(itemString);
+        }
     }
-
+    if (decoders.isEmpty())
+    {
+        QMessageBox::warning(this, "error", "cannot open uri");
+        return;
+    }
     curVideoThread = decoders[0]->getVideoThread();
-    curVideoThread->setActived(true);
-    connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
-
+    if (curVideoThread)
+    {
+        curVideoThread->setActived(true);
+        connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+    }
 
     currentRow = 0;
     ui->tableWidget->setCurrentCell(0,0);
@@ -192,12 +211,18 @@ void MainDialog::OnSelectVideo(int row, int, int, int)
     if (initializing) return;
     if (currentRow == row) return;
     if (!decoders[row]->isOk()) return;
-    curVideoThread->setActived(false);
-    disconnect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+    if (curVideoThread)
+    {
+        curVideoThread->setActived(false);
+        disconnect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+    }
 
     curVideoThread = decoders[row]->getVideoThread();
-    curVideoThread->setActived(true);
-    connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+    if (curVideoThread)
+    {
+        curVideoThread->setActived(true);
+        connect(curVideoThread, SIGNAL(display()), this, SLOT(update()));
+    }
 
     currentRow = row;
     needResize = true;
