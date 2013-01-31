@@ -8,7 +8,7 @@
 #include "ffmpeg.h"
 #include "videothread.h"
 
-class   DecodeThread : public QThread
+class DecodeThread : public QThread
 {
     Q_OBJECT
 public:
@@ -56,6 +56,7 @@ private:
     QString fileName;
     VideoThread* vthread;
 
+    static QMutex avcodec_lock;
 };
 
 #endif // DECODETHREAD_H
