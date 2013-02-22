@@ -1,5 +1,8 @@
 QT       += core gui
 
+#CONFIG += ffmpeg-static
+DEFINES += SEEK_TO_SAME_POS
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 win32 {
@@ -12,23 +15,23 @@ win32 {
         -lswscale
 }
 
-macx {
-    INCLUDEPATH += /usr/local/include/
-    LIBS += \
-        -lavcodec \
-        -lavformat \
-        -lavutil \
-        -lswscale
-}
-
-unix:!mac {
-    INCLUDEPATH += /usr/local/include/
-    LIBS += \
-        /usr/local/lib/libavcodec.a \
-        /usr/local/lib/libavformat.a \
-        /usr/local/lib/libavutil.a \
-        /usr/local/lib/libswscale.a \
-        /usr/local/lib/libx264.a
+unix {
+    ffmpeg-static {
+        INCLUDEPATH += /usr/local/include/
+        LIBS += \
+            /usr/local/lib/libavcodec.a \
+            /usr/local/lib/libavformat.a \
+            /usr/local/lib/libavutil.a \
+            /usr/local/lib/libswscale.a \
+            /usr/local/lib/libx264.a
+    } else {
+        INCLUDEPATH += /usr/local/include/
+        LIBS += \
+            -lavcodec \
+            -lavformat \
+            -lavutil \
+            -lswscale
+    }
 }
 
 SOURCES += \

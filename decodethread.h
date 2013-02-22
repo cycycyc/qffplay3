@@ -25,6 +25,9 @@ public:
     void genVideoThread();
     bool seekMs(int tsms);
     bool seekFrame(qint64 frame);
+#ifdef SEEK_TO_SAME_POS
+    static void setSeekPos(int sp) {seek_pos = sp;}
+#endif
 
 protected:
     virtual void run();
@@ -57,6 +60,9 @@ private:
     VideoThread* vthread;
 
     static QMutex avcodec_lock;
+#ifdef SEEK_TO_SAME_POS
+    static int seek_pos;
+#endif
 };
 
 #endif // DECODETHREAD_H

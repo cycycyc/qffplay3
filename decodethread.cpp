@@ -3,6 +3,9 @@
 #include <QTime>
 
 QMutex DecodeThread::avcodec_lock;
+#ifdef SEEK_TO_SAME_POS
+int DecodeThread::seek_pos = 0;
+#endif
 
 DecodeThread::DecodeThread(QObject *parent) :
     QThread(parent)
@@ -128,9 +131,14 @@ bool DecodeThread::openFile(QString filename)
 
    //seekMs(350000+pFormatCtx->start_time/1000);
 
-   cout << rand();
+#ifdef SEEK_TO_SAME_POS
+   int pos = seek_pos;
+#else
+   int pos = rand();
+#endif
+   cout << pos << endl;
    if (!reachEnd)
-        seekMs((rand()%(pFormatCtx->duration/1000000))*1000);
+        seekMs((pos%(pFormatCtx->duration/1000000))*1000);
    //seekMs(pFormatCtx->duration/1000);
 
    ok=true;

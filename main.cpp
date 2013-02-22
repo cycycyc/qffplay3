@@ -29,6 +29,9 @@ int main(int argc, char** argv)
     avformat_network_init();
     QApplication app(argc, argv);
     srand((unsigned int)time(0));
+#ifdef SEEK_TO_SAME_POS
+    DecodeThread::setSeekPos(rand());
+#endif
     QThreadPool::globalInstance()->setMaxThreadCount(1024);
     MainDialog d;
     d.show();
