@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QThreadPool>
 #ifdef Q_OS_UNIX
-    #include <sys/resource.h>
+#include <sys/resource.h>
 #endif
 #include "maindialog.h"
 
