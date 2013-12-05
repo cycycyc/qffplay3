@@ -38,8 +38,7 @@ int main(int argc, char** argv)
     appDir.cdUp();appDir.cdUp();appDir.cdUp();
     QDir::setCurrent(appDir.absolutePath());
 #endif
-#ifdef Q_OS_UNIX
-#ifndef Q_OS_MAC
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
     QApplication::setStyle("plastique");
 #endif
     QThreadPool::globalInstance()->setMaxThreadCount(1024);
