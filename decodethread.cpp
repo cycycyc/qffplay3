@@ -76,6 +76,7 @@ bool DecodeThread::openFile(QString filename)
     close();
     this->fileName = filename;
 
+    avcodec_lock.lock();
     // Open video file
     if(avformat_open_input(&pFormatCtx, filename.toStdString().c_str(), NULL, NULL)!=0)
         return false; // Couldn't open file
@@ -122,7 +123,6 @@ bool DecodeThread::openFile(QString filename)
     cout << "thread count: " << pVideoCodecCtx->thread_count << endl;
 
     // Open codec
-    avcodec_lock.lock();
     int ret = avcodec_open2(pVideoCodecCtx, pVideoCodec, NULL);
     avcodec_lock.unlock();
     if(ret < 0)// && avcodec_open2(pAudioCodecCtx, pAudioCodec, NULL)<0)

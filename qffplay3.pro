@@ -1,7 +1,8 @@
 QT       += core gui
 
 #CONFIG += ffmpeg-static
-DEFINES += SEEK_TO_SAME_POS
+#DEFINES += SEEK_TO_SAME_POS
+DEFINES += FIX_MAC109_QT51
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

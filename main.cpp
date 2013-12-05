@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QThreadPool>
+#include <QDir>
 #ifdef Q_OS_UNIX
 #include <sys/resource.h>
 #endif
@@ -31,6 +32,15 @@ int main(int argc, char** argv)
     srand((unsigned int)time(0));
 #ifdef SEEK_TO_SAME_POS
     DecodeThread::setSeekPos(rand());
+#endif
+#if defined(Q_OS_MAC) && defined(FIX_MAC109_QT51)
+    QDir appDir(app.applicationDirPath());
+    appDir.cdUp();appDir.cdUp();appDir.cdUp();
+    QDir::setCurrent(appDir.absolutePath());
+#endif
+#ifdef Q_OS_UNIX
+#ifndef Q_OS_MAC
+    QApplication::setStyle("plastique");
 #endif
     QThreadPool::globalInstance()->setMaxThreadCount(1024);
     MainDialog d;
