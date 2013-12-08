@@ -78,8 +78,15 @@ bool DecodeThread::openFile(QString filename)
 
     avcodec_lock.lock();
     // Open video file
-    if(avformat_open_input(&pFormatCtx, filename.toStdString().c_str(), NULL, NULL)!=0)
-        return false; // Couldn't open file
+    int retry = 3;
+    forever {
+        if (--retry < 0) return false;
+        if(avformat_open_input(&pFormatCtx, filename.toStdString().c_str(), NULL, NULL)!=0) {
+            cout << "Cannot open uri, retries left: " << retry << endl;
+            continue; // Couldn't open file
+        }
+        break;
+    }
 
     // Retrieve stream information
     if(avformat_find_stream_info(pFormatCtx, NULL)<0)
